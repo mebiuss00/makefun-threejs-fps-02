@@ -217,7 +217,9 @@ export function createHud({ onPlay }) {
       if (weapon) {
         el('ammo-mag').textContent = weapon.mag;
         el('ammo-reserve').textContent = `/ ${weapon.reserve}`;
-        el('weapon-name').textContent = WEAPONS[weapon.key].name + (player.reloadLeft > 0 ? ' — RELOADING' : '');
+        const hint = player.reloadLeft > 0 ? ' — RELOADING'
+          : weapon.mag === 0 && weapon.reserve > 0 ? ' — PRESS R' : '';
+        el('weapon-name').textContent = WEAPONS[weapon.key].name + hint;
         ammoBox.classList.toggle('empty', weapon.mag === 0);
       } else {
         el('ammo-mag').textContent = '—';
@@ -295,6 +297,19 @@ export function createHud({ onPlay }) {
       minimap.fillStyle = minimap.strokeStyle;
       minimap.font = '700 11px system-ui';
       minimap.fillText(key, sx(site.center.x) - 3, sz(site.center.z) + 4);
+      // The site that matters right now — the plan's target, or the one
+      // the Charge is planted on — breathes in pale gold, so the eye
+      // finds the objective without reading the objective line.
+      const isObjective = world.bomb.state === 'planted' ? world.bomb.site === key : world.plan.site === key;
+      if (isObjective) {
+        const pulse = 0.4 + 0.35 * Math.sin(now * 4);
+        minimap.strokeStyle = `rgba(255,240,205,${pulse.toFixed(2)})`;
+        minimap.lineWidth = 2;
+        minimap.strokeRect(
+          sx(site.minX) - 2.5, sz(site.minZ) - 2.5,
+          sx(site.maxX) - sx(site.minX) + 5, sz(site.maxZ) - sz(site.minZ) + 5,
+        );
+      }
     }
     minimap.fillStyle = '#565d66';
     for (const box of world.map.colliders) {

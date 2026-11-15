@@ -30,8 +30,8 @@ export function createRounds(world, { hud, audio }) {
   };
   world.plan = { site: 'A' };
   world.teamInfo = {
-    breach: { contactAt: -99, contactSite: null },
-    ward: { contactAt: -99, contactSite: null },
+    breach: { contactAt: -99, contactSite: null, deathAt: -99, deathSite: null },
+    ward: { contactAt: -99, contactSite: null, deathAt: -99, deathSite: null },
   };
 
   // The Charge as a prop: a dark block with a blinking eye. It rides a bot
@@ -94,6 +94,10 @@ export function createRounds(world, { hud, audio }) {
     world.teamInfo.ward.contactAt = -99;
     world.teamInfo.breach.contactSite = null;
     world.teamInfo.ward.contactSite = null;
+    world.teamInfo.breach.deathAt = -99;
+    world.teamInfo.ward.deathAt = -99;
+    world.teamInfo.breach.deathSite = null;
+    world.teamInfo.ward.deathSite = null;
   }
 
   function setupRound() {
@@ -187,6 +191,20 @@ export function createRounds(world, { hud, audio }) {
       bomb.state = 'dropped';
       bomb.carrier = null;
       bomb.pos.copy(victim.pos);
+    }
+    // The dead fighter's team learns where it happened: the Wardens'
+    // help rotation reads the freshest death to decide whether the
+    // other site is being hit alone. A death off-site is charged to
+    // whichever plant point it fell nearer.
+    const info = world.teamInfo[victim.team];
+    info.deathAt = world.now;
+    const deathSite = world.map.siteAt(victim.pos.x, victim.pos.z);
+    if (deathSite) {
+      info.deathSite = deathSite;
+    } else {
+      const dA = Math.hypot(victim.pos.x - SITES.A.plant.x, victim.pos.z - SITES.A.plant.z);
+      const dB = Math.hypot(victim.pos.x - SITES.B.plant.x, victim.pos.z - SITES.B.plant.z);
+      info.deathSite = dA <= dB ? 'A' : 'B';
     }
     if (match.phase !== 'live' && match.phase !== 'planted') return;
     if (aliveCount('ward') === 0) {

@@ -140,7 +140,10 @@ export function createArmory({ scene, camera, map, fighters, fx, audio, hooks })
         }
       }
       hitPoint.copy(origin).addScaledVector(dir, Math.min(bestT, 160));
-      if (fighter.isPlayer || victim) fx.tracer(muzzlePos, hitPoint);
+      // Every shot draws its tracer, hit or miss: a firefight you cannot
+      // see is a firefight you cannot read, whether you are trading in
+      // it or spectating it after a death.
+      fx.tracer(muzzlePos, hitPoint);
       if (victim) {
         const locMult = hitTest.part === 'head' ? def.headMult : LOC_MULT[hitTest.part];
         const raw = def.damage * locMult * rangeFade(def, bestT);

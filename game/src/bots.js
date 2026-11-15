@@ -426,13 +426,22 @@ function stepWard(bot, world, dt) {
     if (wish) turnToward(bot, Math.atan2(-wish.x, -wish.z), 0, dt, 4.4);
     return wish;
   }
-  // Hold the assigned post, scanning across its watch angle.
-  const post = HOLD_POSTS[bot.postSite][bot.postIndex];
+  // Help rotation: when a teammate has just died on the other site, the
+  // second holder answers it — one anchor stays behind, and a defender
+  // sitting out the round on an empty site loses it for free. The help
+  // lasts while the death is fresh; after that the post is home again.
+  let postSite = bot.postSite;
+  if (bot.role === 'hold' && bot.postIndex === 1 && info.deathSite &&
+      info.deathSite !== bot.postSite && world.now - info.deathAt < 9) {
+    postSite = info.deathSite;
+  }
+  // Hold the assigned post (or the helped site's), scanning its angle.
+  const post = HOLD_POSTS[postSite][bot.postIndex];
   if (!post) return null;
   const [nodeName, watchYaw] = post;
   const node = world.map.byName.get(nodeName);
   if (Math.hypot(node.x - me.pos.x, node.z - me.pos.z) > 1.2) {
-    if (bot.destName !== nodeName && !bot.dest) setDest(bot, world, nodeName);
+    if (bot.destName !== nodeName && (postSite !== bot.postSite || !bot.dest)) setDest(bot, world, nodeName);
     const wish = followPath(bot, world, dt);
     if (wish) turnToward(bot, Math.atan2(-wish.x, -wish.z), 0, dt, 4.4);
     return wish;
